@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- Menu Bar -->
+        <menuitem id="menu_product_root" name="Product Management" sequence="1"/>
+
+        <!-- Sub Menu for Products -->
+        <menuitem id="menu_product_custom" name="Products" parent="menu_product_root" sequence="1"/>
+
+        <!-- Product Form View -->
+        <record id="view_product_custom_form" model="ir.ui.view">
+            <field name="name">product.custom.form</field>
+            <field name="model">product.custom</field>
+            <field name="arch" type="xml">
+                <form string="Product">
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="price"/>
+                        <field name="image" widget="image"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Product Tree View -->
+        <record id="view_product_custom_tree" model="ir.ui.view">
+            <field name="name">product.custom.tree</field>
+            <field name="model">product.custom</field>
+            <field name="arch" type="xml">
+                <tree string="Products">
+                    <field name="name"/>
+                    <field name="price"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Action for Products -->
+        <record id="action_product_custom" model="ir.actions.act_window">
+            <field name="name">Products</field>
+            <field name="res_model">product.custom</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Link Sub Menu to Action -->
+        <menuitem id="menu_product_custom_action" parent="menu_product_custom" action="action_product_custom" sequence="1"/>
+        
+    </data>
+</openerp>
