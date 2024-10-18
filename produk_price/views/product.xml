@@ -45,10 +45,11 @@
                 <form string="Product Purchase">
                     <group>
                         <field name="product_id"/>
+                        <!-- <field name="price"/> -->
                         <field name="buyer_amount"/>
                         <field name="change" readonly="1"/>
                         <field name="payment_status"/>
-                        <field name="approval_state" readonly="1"/>
+                        <field name="approval_state" readonly= "1"/>
                     </group>
                     <footer>
                         <!-- Enable Confirm button only when the payment_status is 'lunas' or 'belum_lunas' and approval_state is 'draft' -->
