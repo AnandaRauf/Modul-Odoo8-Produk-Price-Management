@@ -6,8 +6,8 @@
         <menuitem id="menu_product_root" name="Product Management" sequence="1"/>
 
         <!-- Sub Menu for Products -->
-        <menuitem id="menu_product_custom" name="Products" parent="menu_product_root" sequence="1"/>
-        <menuitem id="menu_product_purchase" name="Product Purchases" parent="menu_product_root" sequence="2"/>
+        <menuitem id="menu_product_create_list" name="Create Product and List Products" parent="menu_product_root" sequence="2"/>
+        <menuitem id="menu_product_purchase" name="Product Purchases" parent="menu_product_root" sequence="3"/>
 
         <!-- Product Form View -->
         <record id="view_product_custom_form" model="ir.ui.view">
@@ -45,14 +45,12 @@
                 <form string="Product Purchase">
                     <group>
                         <field name="product_id"/>
-                        <!-- <field name="price"/> -->
                         <field name="buyer_amount"/>
                         <field name="change" readonly="1"/>
                         <field name="payment_status"/>
-                        <field name="approval_state" readonly= "1"/>
+                        <field name="approval_state" readonly="1"/>
                     </group>
                     <footer>
-                        <!-- Enable Confirm button only when the payment_status is 'lunas' or 'belum_lunas' and approval_state is 'draft' -->
                         <button name="action_confirm" string="Confirm" type="object" class="oe_highlight" groups="base.group_user"
                             attrs="{'invisible': [('payment_status', 'not in', ['lunas', 'belum_lunas']), ('approval_state', '!=', 'draft')]}"/>
                         <button name="action_reject" string="Reject" type="object" class="oe_link" groups="base.group_user"/>
@@ -60,7 +58,6 @@
                 </form>
             </field>
         </record>
-        
 
         <!-- Purchase Tree View -->
         <record id="view_product_purchase_tree" model="ir.ui.view">
@@ -85,8 +82,15 @@
             <field name="view_mode">tree,form</field>
         </record>
 
+        <!-- Action for Create Product and List Product-->
+        <record id="action_product_create_list" model="ir.actions.act_window">
+            <field name="name">Create and List Product</field>
+            <field name="res_model">product.custom</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
         <!-- Link Sub Menu to Action -->
         <menuitem id="menu_product_purchase_action" parent="menu_product_purchase" action="action_product_purchase" sequence="1"/>
-
+        <menuitem id="menu_product_create_list_action" parent="menu_product_create_list" action="action_product_create_list" sequence="2"/>
     </data>
 </openerp>
