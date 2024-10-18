@@ -14,8 +14,7 @@ class ProductPurchase(models.Model):
     _name = 'product.purchase'
 
     product_id = fields.Many2one('product.custom', string='Product', required=True)
-    # price = fields.Float('Product Price', related='product_id.price', readonly=True)
-    buyer_amount = fields.Float('Buyer Amount',related='product_id.price', required=True)
+    buyer_amount = fields.Float('Buyer Amount', related='product_id.price', required=True)
     change = fields.Float('Change', compute='_compute_change', store=True)
     payment_status = fields.Selection([
         ('bayar', 'Bayar'),
@@ -36,14 +35,12 @@ class ProductPurchase(models.Model):
 
     @api.onchange('payment_status')
     def _onchange_payment_status(self):
-        # When Payment Status is 'Lunas' or 'Belum Lunas', allow the button to be clickable and set approval state to draft
         if self.payment_status in ['lunas', 'belum_lunas']:
             self.approval_state = 'draft'
 
     @api.multi
     def action_confirm(self):
         self.ensure_one()
-        # Confirm when the payment status is either 'Lunas' or 'Belum Lunas'
         if self.payment_status in ['lunas', 'belum_lunas'] and self.approval_state == 'draft':
             self.approval_state = 'confirmed'
         else:
