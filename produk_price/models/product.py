@@ -14,7 +14,8 @@ class ProductPurchase(models.Model):
     _name = 'product.purchase'
 
     product_id = fields.Many2one('product.custom', string='Product', required=True)
-    buyer_amount = fields.Float('Buyer Amount', required=True)
+    # price = fields.Float('Product Price', related='product_id.price', readonly=True)
+    buyer_amount = fields.Float('Buyer Amount',related='product_id.price', required=True)
     change = fields.Float('Change', compute='_compute_change', store=True)
     payment_status = fields.Selection([
         ('bayar', 'Bayar'),
