@@ -7,6 +7,7 @@
 
         <!-- Sub Menu for Products -->
         <menuitem id="menu_product_custom" name="Products" parent="menu_product_root" sequence="1"/>
+        <menuitem id="menu_product_purchase" name="Product Purchases" parent="menu_product_root" sequence="2"/>
 
         <!-- Product Form View -->
         <record id="view_product_custom_form" model="ir.ui.view">
@@ -36,16 +37,55 @@
             </field>
         </record>
 
-        <!-- Action for Products -->
-        <record id="action_product_custom" model="ir.actions.act_window">
-            <field name="name">Products</field>
-            <field name="res_model">product.custom</field>
+        <!-- Purchase Form View -->
+        <record id="view_product_purchase_form" model="ir.ui.view">
+            <field name="name">product.purchase.form</field>
+            <field name="model">product.purchase</field>
+            <field name="arch" type="xml">
+                <form string="Product Purchase">
+                    <group>
+                        <field name="product_id"/>
+                        <field name="buyer_amount"/>
+                        <field name="change" readonly="1"/>
+                        <field name="payment_status"/>
+                        <field name="approval_state" readonly="1"/>
+                    </group>
+                    <footer>
+                        <!-- Enable Confirm button only when the payment_status is 'lunas' or 'belum_lunas' and approval_state is 'draft' -->
+                        <button name="action_confirm" string="Confirm" type="object" class="oe_highlight" groups="base.group_user"
+                            attrs="{'invisible': [('payment_status', 'not in', ['lunas', 'belum_lunas']), ('approval_state', '!=', 'draft')]}"/>
+                        <button name="action_reject" string="Reject" type="object" class="oe_link" groups="base.group_user"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+
+        <!-- Purchase Tree View -->
+        <record id="view_product_purchase_tree" model="ir.ui.view">
+            <field name="name">product.purchase.tree</field>
+            <field name="model">product.purchase</field>
+            <field name="arch" type="xml">
+                <tree string="Product Purchases">
+                    <field name="product_id"/>
+                    <field name="buyer_amount"/>
+                    <field name="change"/>
+                    <field name="payment_status"/>
+                    <field name="approval_state"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Action for Product Purchases -->
+        <record id="action_product_purchase" model="ir.actions.act_window">
+            <field name="name">Product Purchases</field>
+            <field name="res_model">product.purchase</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
 
         <!-- Link Sub Menu to Action -->
-        <menuitem id="menu_product_custom_action" parent="menu_product_custom" action="action_product_custom" sequence="1"/>
-        
+        <menuitem id="menu_product_purchase_action" parent="menu_product_purchase" action="action_product_purchase" sequence="1"/>
+
     </data>
 </openerp>
