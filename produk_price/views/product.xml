@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-
-        <!-- Menu Bar -->
+        
+        <!-- Existing Product Management Menu -->
         <menuitem id="menu_product_root" name="Product Management" sequence="1"/>
-
-        <!-- Sub Menu for Products -->
+        
+        <!-- Existing Submenu for Products -->
         <menuitem id="menu_product_create_list" name="Create Product and List Products" parent="menu_product_root" sequence="2"/>
         <menuitem id="menu_product_purchase" name="Product Purchases" parent="menu_product_root" sequence="3"/>
-
+        
+        <!-- New Menu Title for User Management -->
+        <menuitem id="menu_user_management_root" name="User Management" sequence="4"/>
+        
+        <!-- New Submenu for Creating and Editing Users -->
+        <menuitem id="menu_user_create" name="Create User" parent="menu_user_management_root" sequence="1"/>
+        <menuitem id="menu_user_edit" name="Edit User" parent="menu_user_management_root" sequence="2"/>
+        
         <!-- Product Form View -->
         <record id="view_product_custom_form" model="ir.ui.view">
             <field name="name">product.custom.form</field>
@@ -43,18 +50,29 @@
             <field name="model">product.purchase</field>
             <field name="arch" type="xml">
                 <form string="Product Purchase">
+                    <header>
+                        <!-- Button Confirm hanya untuk pengguna dalam grup Can Confirm -->
+                        <button name="action_confirm" type="object" string="Confirm" states="draft" class="btn-primary" groups="produk_price.group_can_confirm"/>
+                        <button name="action_done" type="object" string="Done" states="confirmed" class="btn-success" groups="produk_price.group_can_confirm"/>
+                        <!-- Button Reject hanya untuk pengguna dalam grup Can Reject -->
+                        <button name="action_reject" type="object" string="Reject" states="draft,confirmed" class="btn-danger" groups="produk_price.group_can_reject"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done,rejected"/>
+                    </header>
                     <group>
                         <field name="product_id"/>
                         <field name="buyer_amount"/>
+                        <field name="quantity_amount"/>
+                        <field name="total_price" readonly="1"/>  
                         <field name="change" readonly="1"/>
-                        <field name="payment_status"/>
-                        <field name="approval_state" readonly="1"/>
+                        <field name="state" readonly="1"/>
                     </group>
-                    <footer>
-                        <button name="action_confirm" string="Confirm" type="object" class="oe_highlight" groups="base.group_user"
-                            attrs="{'invisible': [('payment_status', 'not in', ['lunas', 'belum_lunas']), ('approval_state', '!=', 'draft')]}"/>
-                        <button name="action_reject" string="Reject" type="object" class="oe_link" groups="base.group_user"/>
-                    </footer>
+                    <group>
+                        <!-- Add fields to show who confirmed, done, and rejected -->
+                        <field name="confirmed_by"/>
+                        <field name="done_by"/>
+                        <field name="rejected_by"/>
+                        <field name="viewed_by" widget="many2many_tags" options="{'no_create': True}"/>
+                    </group>
                 </form>
             </field>
         </record>
@@ -67,9 +85,12 @@
                 <tree string="Product Purchases">
                     <field name="product_id"/>
                     <field name="buyer_amount"/>
+                    <field name="total_price"/>  
                     <field name="change"/>
-                    <field name="payment_status"/>
-                    <field name="approval_state"/>
+                    <field name="state"/>
+                    <field name="confirmed_by"/>
+                    <field name="done_by"/>
+                    <field name="rejected_by"/>
                 </tree>
             </field>
         </record>
@@ -89,8 +110,55 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- Link Sub Menu to Action -->
+        <!-- Groups for Can Confirm and Can Reject -->
+        <record id="group_can_confirm" model="res.groups">
+            <field name="name">Can Confirm</field>
+            <field name="category_id" ref="base.module_category_sales"/>
+        </record>
+
+        <record id="group_can_reject" model="res.groups">
+            <field name="name">Can Reject</field>
+            <field name="category_id" ref="base.module_category_sales"/>
+        </record>
+
+        <!-- Action for Creating and Editing Users -->
+        <record id="action_user_create" model="ir.actions.act_window">
+            <field name="name">Create User</field>
+            <field name="res_model">res.users</field>
+            <field name="view_mode">form</field>
+        </record>
+        
+        <record id="action_user_edit" model="ir.actions.act_window">
+            <field name="name">Edit User</field>
+            <field name="res_model">res.users</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Form View for Users with Can Confirm and Can Reject Checkboxes -->
+        <record id="view_users_form_custom" model="ir.ui.view">
+            <field name="name">res.users.form.custom</field>
+            <field name="model">res.users</field>
+            <field name="arch" type="xml">
+                <form string="Users">
+                    <group>
+                        <field name="name"/>
+                        <field name="login"/>
+                        <field name="groups_id" widget="many2many_tags"/>
+                        <!-- Checkbox for Can Confirm and Can Reject -->
+                        <group>
+                            <field name="groups_id" domain="[('id', 'in', [ref('produk_price.group_can_confirm')])]" string="Can Confirm"/>
+                            <field name="groups_id" domain="[('id', 'in', [ref('produk_price.group_can_reject')])]" string="Can Reject"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Link Submenus to Actions -->
         <menuitem id="menu_product_purchase_action" parent="menu_product_purchase" action="action_product_purchase" sequence="1"/>
         <menuitem id="menu_product_create_list_action" parent="menu_product_create_list" action="action_product_create_list" sequence="2"/>
+        <menuitem id="menu_user_create_action" parent="menu_user_create" action="action_user_create" sequence="1"/>
+        <menuitem id="menu_user_edit_action" parent="menu_user_edit" action="action_user_edit" sequence="2"/>
+
     </data>
 </openerp>
