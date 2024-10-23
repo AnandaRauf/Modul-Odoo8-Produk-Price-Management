@@ -14,39 +14,81 @@ class ProductPurchase(models.Model):
     _name = 'product.purchase'
 
     product_id = fields.Many2one('product.custom', string='Product', required=True)
-    buyer_amount = fields.Float('Buyer Amount', related='product_id.price', required=True)
+    buyer_amount = fields.Float('Buyer Amount', required=True)
+    quantity_amount = fields.Integer('Total Quantity', required=True)
+    total_price = fields.Float('Total Price', compute='_compute_total_price', store=True)
     change = fields.Float('Change', compute='_compute_change', store=True)
-    payment_status = fields.Selection([
-        ('bayar', 'Bayar'),
-        ('belum_bayar', 'Belum Bayar'),
-        ('lunas', 'Lunas'),
-        ('belum_lunas', 'Belum Lunas')
-    ], string='Payment Status', default='belum_bayar')
-    approval_state = fields.Selection([
+
+    state = fields.Selection([
         ('draft', 'Draft'),
         ('confirmed', 'Confirmed'),
+        ('done', 'Done'),
         ('rejected', 'Rejected')
     ], string='Approval State', default='draft')
+    confirmed_by = fields.Many2one('res.users', string='Confirmed By', readonly=True)
+    done_by = fields.Many2one('res.users', string='Done By', readonly=True)
+    rejected_by = fields.Many2one('res.users', string='Rejected By', readonly=True)
 
-    @api.depends('buyer_amount', 'product_id.price')
+    
+    viewed_by = fields.Many2many('res.users', string='Viewed By', readonly=True)
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        if self.product_id:
+            self.buyer_amount = self.product_id.price
+            self.quantity_amount = 0
+            self.total_price = 0.0
+
+    @api.onchange('quantity_amount')
+    def _onchange_quantity(self):
+        if self.quantity_amount:
+            self.total_price = self.product_id.price * self.quantity_amount
+
+    @api.depends('product_id.price', 'quantity_amount')
+    def _compute_total_price(self):
+        for record in self:
+            if record.quantity_amount and record.product_id:
+                record.total_price = record.product_id.price * record.quantity_amount
+            else:
+                record.total_price = 0.0
+
+    @api.depends('buyer_amount', 'total_price')
     def _compute_change(self):
         for record in self:
-            record.change = record.buyer_amount - record.product_id.price if record.buyer_amount > record.product_id.price else 0.0
+            if record.buyer_amount and record.total_price:
+                record.change = record.buyer_amount - record.total_price
+            else:
+                record.change = 0.0
 
-    @api.onchange('payment_status')
-    def _onchange_payment_status(self):
-        if self.payment_status in ['lunas', 'belum_lunas']:
-            self.approval_state = 'draft'
 
     @api.multi
     def action_confirm(self):
-        self.ensure_one()
-        if self.payment_status in ['lunas', 'belum_lunas'] and self.approval_state == 'draft':
-            self.approval_state = 'confirmed'
-        else:
-            raise exceptions.Warning('Cannot confirm without a valid payment status.')
+        if not self.env.user.has_group('produk_price.group_confirm_only'):
+            raise exceptions.UserError("You do not have permission to confirm.")
+        self.write({
+            'state': 'confirmed',
+            'confirmed_by': self.env.user.id,
+            'viewed_by': [(4, self.env.user.id)]  # Adds the user who confirmed to viewed_by
+        })
 
+    # Modify action_done to log user who marked as done and allow other users to view
+    @api.multi
+    def action_done(self):
+        if not self.env.user.has_group('produk_price.group_confirm_only'):
+            raise exceptions.UserError("You do not have permission to mark as done.")
+        self.write({
+            'state': 'done',
+            'done_by': self.env.user.id,
+            'viewed_by': [(4, self.env.user.id)]  # Adds the user who marked as done to viewed_by
+        })
+
+    # Modify action_reject to log user who rejected and allow other users to view
     @api.multi
     def action_reject(self):
-        self.ensure_one()
-        self.approval_state = 'rejected'
+        if not self.env.user.has_group('produk_price.group_reject_only'):
+            raise exceptions.UserError("You do not have permission to reject.")
+        self.write({
+            'state': 'rejected',
+            'rejected_by': self.env.user.id,
+            'viewed_by': [(4, self.env.user.id)]  # Adds the user who rejected to viewed_by
+        })
