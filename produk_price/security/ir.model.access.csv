@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_product_confirm_only,access_product_confirm_only,model_product_purchase,group_confirm_only,1,1,1,0
+access_product_reject_only,access_product_reject_only,model_product_purchase,group_reject_only,1,0,0,0
+access_product_reject_only,access_product_reject_only,model_product_purchase,group_reject_only,1,1,0,0
+access_product_purchase,access_product_purchase,model_product_purchase,,1,1,1,1
+access_product_custom,access_product_custom,model_product_custom,,1,0,0,0
+
