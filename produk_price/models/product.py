@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from openerp import api, models, fields, exceptions
 
 class ProductCustom(models.Model):
@@ -8,6 +7,19 @@ class ProductCustom(models.Model):
     description = fields.Text('Product Description')
     price = fields.Float('Product Price', required=True)
     image = fields.Binary('Product Image')
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected')
+    ], string='Status Product', default='draft')
+
+    @api.multi
+    def action_approve(self):
+        self.write({'state': 'approved'})
+
+    @api.multi
+    def action_reject(self):
+        self.write({'state': 'rejected'})
 
 
 class ProductPurchase(models.Model):
@@ -18,77 +30,54 @@ class ProductPurchase(models.Model):
     quantity_amount = fields.Integer('Total Quantity', required=True)
     total_price = fields.Float('Total Price', compute='_compute_total_price', store=True)
     change = fields.Float('Change', compute='_compute_change', store=True)
-
     state = fields.Selection([
         ('draft', 'Draft'),
         ('confirmed', 'Confirmed'),
-        ('done', 'Done'),
+        ('approved', 'Approved'),
         ('rejected', 'Rejected')
-    ], string='Approval State', default='draft')
-    confirmed_by = fields.Many2one('res.users', string='Confirmed By', readonly=True)
-    done_by = fields.Many2one('res.users', string='Done By', readonly=True)
-    rejected_by = fields.Many2one('res.users', string='Rejected By', readonly=True)
+    ], string='Status Product', default='draft')
 
-    
+    confirmed_by = fields.Many2one('res.users', string='Confirmed By', readonly=True)
+    approved_by = fields.Many2one('res.users', string='Approved By', readonly=True)
+    rejected_by = fields.Many2one('res.users', string='Rejected By', readonly=True)
     viewed_by = fields.Many2many('res.users', string='Viewed By', readonly=True)
 
-    @api.onchange('product_id')
-    def _onchange_product_id(self):
-        if self.product_id:
-            self.buyer_amount = self.product_id.price
-            self.quantity_amount = 0
-            self.total_price = 0.0
-
-    @api.onchange('quantity_amount')
-    def _onchange_quantity(self):
-        if self.quantity_amount:
-            self.total_price = self.product_id.price * self.quantity_amount
-
-    @api.depends('product_id.price', 'quantity_amount')
+    @api.depends('product_id', 'quantity_amount')
     def _compute_total_price(self):
         for record in self:
-            if record.quantity_amount and record.product_id:
-                record.total_price = record.product_id.price * record.quantity_amount
-            else:
-                record.total_price = 0.0
+            record.total_price = record.product_id.price * record.quantity_amount if record.product_id and record.quantity_amount else 0.0
 
     @api.depends('buyer_amount', 'total_price')
     def _compute_change(self):
         for record in self:
-            if record.buyer_amount and record.total_price:
-                record.change = record.buyer_amount - record.total_price
-            else:
-                record.change = 0.0
-
+            record.change = record.buyer_amount - record.total_price if record.buyer_amount and record.total_price else 0.0
 
     @api.multi
     def action_confirm(self):
-        if not self.env.user.has_group('produk_price.group_confirm_only'):
+        if not self.env.user.has_group('produk_price.group_can_confirm'):
             raise exceptions.UserError("You do not have permission to confirm.")
         self.write({
             'state': 'confirmed',
             'confirmed_by': self.env.user.id,
-            'viewed_by': [(4, self.env.user.id)]  # Adds the user who confirmed to viewed_by
+            'viewed_by': [(4, self.env.user.id)]
         })
 
-    # Modify action_done to log user who marked as done and allow other users to view
     @api.multi
-    def action_done(self):
-        if not self.env.user.has_group('produk_price.group_confirm_only'):
+    def action_approved(self):
+        if not self.env.user.has_group('produk_price.group_can_confirm'):
             raise exceptions.UserError("You do not have permission to mark as done.")
         self.write({
-            'state': 'done',
-            'done_by': self.env.user.id,
-            'viewed_by': [(4, self.env.user.id)]  # Adds the user who marked as done to viewed_by
+            'state': 'approved',
+            'approved_by': self.env.user.id,
+            'viewed_by': [(4, self.env.user.id)]
         })
 
-    # Modify action_reject to log user who rejected and allow other users to view
     @api.multi
     def action_reject(self):
-        if not self.env.user.has_group('produk_price.group_reject_only'):
+        if not self.env.user.has_group('produk_price.group_can_reject'):
             raise exceptions.UserError("You do not have permission to reject.")
         self.write({
             'state': 'rejected',
             'rejected_by': self.env.user.id,
-            'viewed_by': [(4, self.env.user.id)]  # Adds the user who rejected to viewed_by
+            'viewed_by': [(4, self.env.user.id)]
         })
