@@ -17,11 +17,18 @@
         <menuitem id="menu_user_edit" name="Edit User" parent="menu_user_management_root" sequence="2"/>
         
         <!-- Product Form View -->
-        <record id="view_product_custom_form" model="ir.ui.view">
+        
+          <record id="view_product_custom_form" model="ir.ui.view">
             <field name="name">product.custom.form</field>
             <field name="model">product.custom</field>
             <field name="arch" type="xml">
                 <form string="Product">
+                    <header>
+                        <button name="action_approve" type="object" string="Approve" states="draft" class="btn-success"/>
+                        <button name="action_reject" type="object" string="Reject" states="draft,approved" class="btn-danger"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,approved,rejected"
+                               statusbar_colors='{"draft": "blue", "approved": "green", "rejected": "red"}'/>
+                    </header>
                     <group>
                         <field name="name"/>
                         <field name="description"/>
@@ -40,23 +47,35 @@
                 <tree string="Products">
                     <field name="name"/>
                     <field name="price"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
 
-        <!-- Purchase Form View -->
+        
+
+        <!-- Existing View Definitions Below -->
+        <!-- Product Form View -->
         <record id="view_product_purchase_form" model="ir.ui.view">
             <field name="name">product.purchase.form</field>
             <field name="model">product.purchase</field>
             <field name="arch" type="xml">
                 <form string="Product Purchase">
                     <header>
-                        <!-- Button Confirm hanya untuk pengguna dalam grup Can Confirm -->
-                        <button name="action_confirm" type="object" string="Confirm" states="draft" class="btn-primary" groups="produk_price.group_can_confirm"/>
-                        <button name="action_done" type="object" string="Done" states="confirmed" class="btn-success" groups="produk_price.group_can_confirm"/>
-                        <!-- Button Reject hanya untuk pengguna dalam grup Can Reject -->
-                        <button name="action_reject" type="object" string="Reject" states="draft,confirmed" class="btn-danger" groups="produk_price.group_can_reject"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done,rejected"/>
+                        <!-- Tombol Konfirmasi -->
+    <button name="action_confirm" type="object" string="Confirm" states="draft" class="btn-primary" />
+
+    <!-- Tombol Selesai -->
+    <button name="action_approved" type="object" string="Approved" states="confirmed" class="btn-success" />
+
+    <!-- Tombol Tolak -->
+    <button name="action_reject" type="object" string="Reject" states="draft,confirmed" class="btn-danger" />
+
+    <!-- Status Bar -->
+    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,approved,rejected"
+           statusbar_colors='{"draft": "blue", "confirmed": "orange", "approved": "green", "rejected": "red"}' 
+           options="{'clickable': True}"/>
+
                     </header>
                     <group>
                         <field name="product_id"/>
@@ -64,18 +83,18 @@
                         <field name="quantity_amount"/>
                         <field name="total_price" readonly="1"/>  
                         <field name="change" readonly="1"/>
-                        <field name="state" readonly="1"/>
+                        <field name="state" string="Status Product" readonly="1"/>
                     </group>
                     <group>
-                        <!-- Add fields to show who confirmed, done, and rejected -->
                         <field name="confirmed_by"/>
-                        <field name="done_by"/>
+                        <field name="approved_by"/>
                         <field name="rejected_by"/>
                         <field name="viewed_by" widget="many2many_tags" options="{'no_create': True}"/>
                     </group>
                 </form>
             </field>
         </record>
+        
 
         <!-- Purchase Tree View -->
         <record id="view_product_purchase_tree" model="ir.ui.view">
@@ -87,14 +106,13 @@
                     <field name="buyer_amount"/>
                     <field name="total_price"/>  
                     <field name="change"/>
-                    <field name="state"/>
+                    <field name="state" string="Status Product"/>  
                     <field name="confirmed_by"/>
-                    <field name="done_by"/>
+                    <field name="approved_by"/>
                     <field name="rejected_by"/>
                 </tree>
             </field>
         </record>
-
         <!-- Action for Product Purchases -->
         <record id="action_product_purchase" model="ir.actions.act_window">
             <field name="name">Product Purchases</field>
