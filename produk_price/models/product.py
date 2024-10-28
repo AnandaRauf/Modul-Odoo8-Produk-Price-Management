@@ -1,4 +1,5 @@
-from openerp import api, models, fields, exceptions
+from openerp import api, models, fields
+from openerp.exceptions import except_orm
 
 class ProductCustom(models.Model):
     _name = 'product.custom'
@@ -9,18 +10,28 @@ class ProductCustom(models.Model):
     image = fields.Binary('Product Image')
     state = fields.Selection([
         ('draft', 'Draft'),
+        ('confirmed', 'Confirmed'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected')
     ], string='Status Product', default='draft')
 
     @api.multi
+    def action_confirm(self):
+        if not self.env.user.has_group('produk_price.group_junior_product_manager'):
+            raise AccessError("You do not have permission to confirm.")
+        self.write({'state': 'confirmed'})
+
+    @api.multi
     def action_approve(self):
+        if not self.env.user.has_group('produk_price.group_senior_product_manager'):
+            raise AccessError("You do not have permission to approve.")
         self.write({'state': 'approved'})
 
     @api.multi
     def action_reject(self):
+        if not self.env.user.has_group('produk_price.group_senior_product_manager'):
+            raise AccessError("You do not have permission to reject.")
         self.write({'state': 'rejected'})
-
 
 class ProductPurchase(models.Model):
     _name = 'product.purchase'
@@ -55,7 +66,7 @@ class ProductPurchase(models.Model):
     @api.multi
     def action_confirm(self):
         if not self.env.user.has_group('produk_price.group_can_confirm'):
-            raise exceptions.UserError("You do not have permission to confirm.")
+            raise except_orm("Permission Denied", "You do not have permission to confirm.")
         self.write({
             'state': 'confirmed',
             'confirmed_by': self.env.user.id,
@@ -65,7 +76,7 @@ class ProductPurchase(models.Model):
     @api.multi
     def action_approved(self):
         if not self.env.user.has_group('produk_price.group_can_confirm'):
-            raise exceptions.UserError("You do not have permission to mark as done.")
+            raise except_orm("Permission Denied", "You do not have permission to mark as done.")
         self.write({
             'state': 'approved',
             'approved_by': self.env.user.id,
@@ -75,7 +86,7 @@ class ProductPurchase(models.Model):
     @api.multi
     def action_reject(self):
         if not self.env.user.has_group('produk_price.group_can_reject'):
-            raise exceptions.UserError("You do not have permission to reject.")
+            raise except_orm("Permission Denied", "You do not have permission to reject.")
         self.write({
             'state': 'rejected',
             'rejected_by': self.env.user.id,
