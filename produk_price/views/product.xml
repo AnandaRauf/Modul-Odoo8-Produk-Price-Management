@@ -1,94 +1,206 @@
-from openerp import api, models, fields
-from openerp.exceptions import except_orm
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <!-- Existing Product Management Menu -->
+        <menuitem id="menu_product_root" name="Product Management" sequence="1"/>
+        
+        <!-- Existing Submenu for Products -->
+        <menuitem id="menu_product_create_list" name="Create Product and List Products" parent="menu_product_root" sequence="2"/>
+        <menuitem id="menu_product_purchase" name="Product Purchases" parent="menu_product_root" sequence="3"/>
+        
+        <!-- New Menu Title for User Management -->
+        <menuitem id="menu_user_management_root" name="User Management" sequence="4"/>
+        
+        <!-- New Submenu for Creating and Editing Users -->
+        <menuitem id="menu_user_create" name="Create User" parent="menu_user_management_root" sequence="1"/>
+        <menuitem id="menu_user_edit" name="Edit User" parent="menu_user_management_root" sequence="2"/>
+        
+        <record id="group_can_confirm" model="res.groups">
+            <field name="name">Can Confirm</field>
+            <field name="category_id" ref="base.module_category_sales"/>
+        </record>
+        
+        <record id="group_can_reject" model="res.groups">
+            <field name="name">Can Reject</field>
+            <field name="category_id" ref="base.module_category_sales"/>
+        </record>
+        <record id="group_junior_product_manager" model="res.groups">
+            <field name="name">Junior Product Manager</field>
+            <field name="category_id" ref="base.module_category_product"/>
+        </record>
+        <record id="group_senior_product_manager" model="res.groups">
+            <field name="name">Senior Product Manager</field>
+            <field name="category_id" ref="base.module_category_product"/>
+        </record>
+ <!-- Product Form View -->
+        <record id="view_product_custom_form" model="ir.ui.view">
+            <field name="name">product.custom.form</field>
+            <field name="model">product.custom</field>
+            <field name="arch" type="xml">
+                <form string="Product">
+                    <header>
+                        <button name="action_confirm" type="object" string="Confirm" 
+                                states="draft" class="btn-success"
+                                groups="produk_price.group_junior_product_manager"
+                                attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                       
+                        <button name="action_approve" type="object" string="Approve" 
+                                states="confirmed" class="btn-success"
+                                groups="produk_price.group_senior_product_manager"
+                                attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+        
+                        <button name="action_reject" type="object" string="Reject" 
+                                states="draft,confirmed" class="btn-danger"
+                                groups="produk_price.group_senior_product_manager"
+                                attrs="{'invisible': [('state', '=', 'rejected')]}"/>
+                        
+                        <field name="state" widget="statusbar" 
+                               statusbar_visible="draft,confirmed,approved,rejected"
+                               statusbar_colors='{"draft": "blue", "confirmed": "yellow", "approved": "green", "rejected":"red"}'/>
+                    </header>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="price"/>
+                        <field name="image" widget="image"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
-class ProductCustom(models.Model):
-    _name = 'product.custom'
+        <!-- Product Tree View -->
+        <record id="view_product_custom_tree" model="ir.ui.view">
+            <field name="name">product.custom.tree</field>
+            <field name="model">product.custom</field>
+            <field name="arch" type="xml">
+                <tree string="Products">
+                    <field name="name"/>
+                    <field name="price"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
 
-    name = fields.Char('Product Name', required=True)
-    description = fields.Text('Product Description')
-    price = fields.Float('Product Price', required=True)
-    image = fields.Binary('Product Image')
-    state = fields.Selection([
-        ('draft', 'Draft'),
-        ('confirmed', 'Confirmed'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected')
-    ], string='Status Product', default='draft')
+        
 
-    @api.multi
-    def action_confirm(self):
-        if not self.env.user.has_group('produk_price.group_junior_product_manager'):
-            raise AccessError("You do not have permission to confirm.")
-        self.write({'state': 'confirmed'})
+        <!-- Form View for Product Purchase -->
+          <!-- Product Purchase Form View -->
+          <record id="view_product_purchase_form" model="ir.ui.view">
+            <field name="name">product.purchase.form</field>
+            <field name="model">product.purchase</field>
+            <field name="arch" type="xml">
+                <form string="Product Purchase">
+                    <header>
+                        
+                        <button name="action_confirm" type="object" string="Confirm" states="draft" class="btn-primary" />
+                        
+                        <button name="action_approved" type="object" string="Approved" states="confirmed" class="btn-success" />
+                        
+                        <button name="action_reject" type="object" string="Reject" states="draft,confirmed" class="btn-danger" />
+                   
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,approved,rejected"
+                               statusbar_colors='{"draft": "blue", "confirmed": "orange", "approved": "green", "rejected": "red"}'/>
+                    </header>
+                    <group>
+                        <field name="product_id"/>
+                        <field name="buyer_amount"/>
+                        <field name="quantity_amount"/>
+                        <field name="total_price" readonly="1"/>  
+                        <field name="change" readonly="1"/>
+                        <field name="state" string="Status Product" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="confirmed_by"/>
+                        <field name="approved_by"/>
+                        <field name="rejected_by"/>
+                        <field name="viewed_by" widget="many2many_tags" options="{'no_create': True}"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+        
 
-    @api.multi
-    def action_approve(self):
-        if not self.env.user.has_group('produk_price.group_senior_product_manager'):
-            raise AccessError("You do not have permission to approve.")
-        self.write({'state': 'approved'})
+        <!-- Purchase Tree View -->
+        <record id="view_product_purchase_tree" model="ir.ui.view">
+            <field name="name">product.purchase.tree</field>
+            <field name="model">product.purchase</field>
+            <field name="arch" type="xml">
+                <tree string="Product Purchases">
+                    <field name="product_id"/>
+                    <field name="buyer_amount"/>
+                    <field name="total_price"/>  
+                    <field name="change"/>
+                    <field name="state" string="Status Product"/>  
+                    <field name="confirmed_by"/>
+                    <field name="approved_by"/>
+                    <field name="rejected_by"/>
+                </tree>
+            </field>
+        </record>
+        <!-- Action for Product Purchases -->
+        <record id="action_product_purchase" model="ir.actions.act_window">
+            <field name="name">Product Purchases</field>
+            <field name="res_model">product.purchase</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
 
-    @api.multi
-    def action_reject(self):
-        if not self.env.user.has_group('produk_price.group_senior_product_manager'):
-            raise AccessError("You do not have permission to reject.")
-        self.write({'state': 'rejected'})
+        <!-- Action for Create Product and List Product-->
+        <record id="action_product_create_list" model="ir.actions.act_window">
+            <field name="name">Create and List Product</field>
+            <field name="res_model">product.custom</field>
+            <field name="view_mode">tree,form</field>
+        </record>
 
-class ProductPurchase(models.Model):
-    _name = 'product.purchase'
+        <!-- Groups for Can Confirm and Can Reject
+        <record id="group_can_confirm" model="res.groups">
+            <field name="name">Can Confirm</field>
+            <field name="category_id" ref="base.module_category_sales"/>
+        </record>
 
-    product_id = fields.Many2one('product.custom', string='Product', required=True)
-    buyer_amount = fields.Float('Buyer Amount', required=True)
-    quantity_amount = fields.Integer('Total Quantity', required=True)
-    total_price = fields.Float('Total Price', compute='_compute_total_price', store=True)
-    change = fields.Float('Change', compute='_compute_change', store=True)
-    state = fields.Selection([
-        ('draft', 'Draft'),
-        ('confirmed', 'Confirmed'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected')
-    ], string='Status Product', default='draft')
+        <record id="group_can_reject" model="res.groups">
+            <field name="name">Can Reject</field>
+            <field name="category_id" ref="base.module_category_sales"/>
+        </record> -->
 
-    confirmed_by = fields.Many2one('res.users', string='Confirmed By', readonly=True)
-    approved_by = fields.Many2one('res.users', string='Approved By', readonly=True)
-    rejected_by = fields.Many2one('res.users', string='Rejected By', readonly=True)
-    viewed_by = fields.Many2many('res.users', string='Viewed By', readonly=True)
+        <!-- Action for Creating and Editing Users -->
+        <record id="action_user_create" model="ir.actions.act_window">
+            <field name="name">Create User</field>
+            <field name="res_model">res.users</field>
+            <field name="view_mode">form</field>
+        </record>
+        
+        <record id="action_user_edit" model="ir.actions.act_window">
+            <field name="name">Edit User</field>
+            <field name="res_model">res.users</field>
+            <field name="view_mode">tree,form</field>
+        </record>
 
-    @api.depends('product_id', 'quantity_amount')
-    def _compute_total_price(self):
-        for record in self:
-            record.total_price = record.product_id.price * record.quantity_amount if record.product_id and record.quantity_amount else 0.0
+        <!-- Form View for Users with Can Confirm and Can Reject Checkboxes -->
+        <record id="view_users_form_custom" model="ir.ui.view">
+            <field name="name">res.users.form.custom</field>
+            <field name="model">res.users</field>
+            <field name="arch" type="xml">
+                <form string="Users">
+                    <group>
+                        <field name="name"/>
+                        <field name="login"/>
+                        <field name="groups_id" widget="many2many_tags"/>
+                        <group>
+                            <field name="groups_id" domain="[('id', 'in', [ref('produk_price.group_product_manager')])]" 
+                                   string="Product Manager Access"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
 
-    @api.depends('buyer_amount', 'total_price')
-    def _compute_change(self):
-        for record in self:
-            record.change = record.buyer_amount - record.total_price if record.buyer_amount and record.total_price else 0.0
+        <!-- Link Submenus to Actions -->
+        <menuitem id="menu_product_purchase_action" parent="menu_product_purchase" action="action_product_purchase" sequence="1"/>
+        <menuitem id="menu_product_create_list_action" parent="menu_product_create_list" action="action_product_create_list" sequence="2"/>
+        <menuitem id="menu_user_create_action" parent="menu_user_create" action="action_user_create" sequence="1"/>
+        <menuitem id="menu_user_edit_action" parent="menu_user_edit" action="action_user_edit" sequence="2"/>
 
-    @api.multi
-    def action_confirm(self):
-        if not self.env.user.has_group('produk_price.group_can_confirm'):
-            raise except_orm("Permission Denied", "You do not have permission to confirm.")
-        self.write({
-            'state': 'confirmed',
-            'confirmed_by': self.env.user.id,
-            'viewed_by': [(4, self.env.user.id)]
-        })
-
-    @api.multi
-    def action_approved(self):
-        if not self.env.user.has_group('produk_price.group_can_confirm'):
-            raise except_orm("Permission Denied", "You do not have permission to mark as done.")
-        self.write({
-            'state': 'approved',
-            'approved_by': self.env.user.id,
-            'viewed_by': [(4, self.env.user.id)]
-        })
-
-    @api.multi
-    def action_reject(self):
-        if not self.env.user.has_group('produk_price.group_can_reject'):
-            raise except_orm("Permission Denied", "You do not have permission to reject.")
-        self.write({
-            'state': 'rejected',
-            'rejected_by': self.env.user.id,
-            'viewed_by': [(4, self.env.user.id)]
-        })
+    </data>
+</openerp>
