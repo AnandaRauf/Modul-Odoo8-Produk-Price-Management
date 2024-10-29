@@ -34,40 +34,40 @@
             <field name="category_id" ref="base.module_category_product"/>
         </record>
  <!-- Product Form View -->
-        <record id="view_product_custom_form" model="ir.ui.view">
-            <field name="name">product.custom.form</field>
-            <field name="model">product.custom</field>
-            <field name="arch" type="xml">
-                <form string="Product">
-                    <header>
-                        <button name="action_confirm" type="object" string="Confirm" 
-                                states="draft" class="btn-success"
-                                groups="produk_price.group_junior_product_manager"
-                                attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                       
-                        <button name="action_approve" type="object" string="Approve" 
-                                states="confirmed" class="btn-success"
-                                groups="produk_price.group_senior_product_manager"
-                                attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
-        
-                        <button name="action_reject" type="object" string="Reject" 
-                                states="draft,confirmed" class="btn-danger"
-                                groups="produk_price.group_senior_product_manager"
-                                attrs="{'invisible': [('state', '=', 'rejected')]}"/>
-                        
-                        <field name="state" widget="statusbar" 
-                               statusbar_visible="draft,confirmed,approved,rejected"
-                               statusbar_colors='{"draft": "blue", "confirmed": "yellow", "approved": "green", "rejected":"red"}'/>
-                    </header>
-                    <group>
-                        <field name="name"/>
-                        <field name="description"/>
-                        <field name="price"/>
-                        <field name="image" widget="image"/>
-                    </group>
-                </form>
-            </field>
-        </record>
+ <record id="view_product_custom_form" model="ir.ui.view">
+    <field name="name">product.custom.form</field>
+    <field name="model">product.custom</field>
+    <field name="arch" type="xml">
+        <form string="Product">
+            <header>
+                <button name="action_confirm" type="object" string="Confirm" 
+                        states="draft" class="btn-success"
+                        groups="produk_price.group_junior_product_manager"
+                        attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+               
+                <button name="action_approve" type="object" string="Approve" 
+                        states="confirmed" class="btn-success"
+                        groups="produk_price.group_senior_product_manager"
+                        attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+
+                <button name="action_reject" type="object" string="Reject" 
+                        states="draft,confirmed" class="btn-danger"
+                        groups="produk_price.group_senior_product_manager"
+                        attrs="{'invisible': [('state', '=', 'rejected')]}"/>
+                
+                <field name="state" widget="statusbar" 
+                       statusbar_visible="draft,confirmed,approved,rejected"
+                       statusbar_colors='{"draft": "blue", "confirmed": "yellow", "approved": "green", "rejected":"red"}'/>
+            </header>
+            <group>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="price"/>
+                <field name="image" widget="image"/>
+            </group>
+        </form>
+    </field>
+</record>
 
         <!-- Product Tree View -->
         <record id="view_product_custom_tree" model="ir.ui.view">
@@ -86,24 +86,21 @@
 
         <!-- Form View for Product Purchase -->
           <!-- Product Purchase Form View -->
-          <record id="view_product_purchase_form" model="ir.ui.view">
+          <!-- Product Purchase Form View -->
+        <record id="view_product_purchase_form" model="ir.ui.view">
             <field name="name">product.purchase.form</field>
             <field name="model">product.purchase</field>
             <field name="arch" type="xml">
                 <form string="Product Purchase">
                     <header>
-                        
                         <button name="action_confirm" type="object" string="Confirm" states="draft" class="btn-primary" />
-                        
                         <button name="action_approved" type="object" string="Approved" states="confirmed" class="btn-success" />
-                        
                         <button name="action_reject" type="object" string="Reject" states="draft,confirmed" class="btn-danger" />
-                   
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,approved,rejected"
                                statusbar_colors='{"draft": "blue", "confirmed": "orange", "approved": "green", "rejected": "red"}'/>
                     </header>
                     <group>
-                        <field name="product_id"/>
+                        <field name="product_id" domain="[('state', 'in', ['confirmed', 'approved'])]"/>
                         <field name="buyer_amount"/>
                         <field name="quantity_amount"/>
                         <field name="total_price" readonly="1"/>  
