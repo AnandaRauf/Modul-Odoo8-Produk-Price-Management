@@ -1,5 +1,5 @@
 from openerp import api, models, fields
-from openerp.exceptions import except_orm
+from openerp.exceptions import AccessError
 
 class ProductCustom(models.Model):
     _name = 'product.custom'
@@ -33,10 +33,14 @@ class ProductCustom(models.Model):
             raise AccessError("You do not have permission to reject.")
         self.write({'state': 'rejected'})
 
+
 class ProductPurchase(models.Model):
     _name = 'product.purchase'
 
-    product_id = fields.Many2one('product.custom', string='Product', required=True)
+    product_id = fields.Many2one(
+        'product.custom', string='Product', required=True,
+        domain=[('state', 'in', ['confirmed', 'approved'])]
+    )
     buyer_amount = fields.Float('Buyer Amount', required=True)
     quantity_amount = fields.Integer('Total Quantity', required=True)
     total_price = fields.Float('Total Price', compute='_compute_total_price', store=True)
@@ -66,7 +70,7 @@ class ProductPurchase(models.Model):
     @api.multi
     def action_confirm(self):
         if not self.env.user.has_group('produk_price.group_can_confirm'):
-            raise except_orm("Permission Denied", "You do not have permission to confirm.")
+            raise AccessError("Permission Denied", "You do not have permission to confirm.")
         self.write({
             'state': 'confirmed',
             'confirmed_by': self.env.user.id,
@@ -76,7 +80,7 @@ class ProductPurchase(models.Model):
     @api.multi
     def action_approved(self):
         if not self.env.user.has_group('produk_price.group_can_confirm'):
-            raise except_orm("Permission Denied", "You do not have permission to mark as done.")
+            raise AccessError("Permission Denied", "You do not have permission to mark as done.")
         self.write({
             'state': 'approved',
             'approved_by': self.env.user.id,
@@ -86,7 +90,7 @@ class ProductPurchase(models.Model):
     @api.multi
     def action_reject(self):
         if not self.env.user.has_group('produk_price.group_can_reject'):
-            raise except_orm("Permission Denied", "You do not have permission to reject.")
+            raise AccessError("Permission Denied", "You do not have permission to reject.")
         self.write({
             'state': 'rejected',
             'rejected_by': self.env.user.id,
