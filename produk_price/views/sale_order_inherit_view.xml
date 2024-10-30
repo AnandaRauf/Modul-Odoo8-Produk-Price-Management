@@ -2,22 +2,15 @@
 <openerp>
     <data>
         <record model="ir.ui.view" id="sale_order_inherit_form_view">
-            <field name="name">sale.order.form</field>
+            <field name="name">sale.order.form.inherited</field>
             <field name="model">sale.order</field>
-            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
-                <!-- Ganti product_id agar sesuai dengan model product.custom -->
                 <xpath expr="//field[@name='order_line']/tree//field[@name='product_id']" position="replace">
-                    <field name="product_id" />
+                    <field name="product_id"/>
                 </xpath>
-                <!-- Replace untuk menampilkan price_unit dari product.custom -->
                 <xpath expr="//field[@name='order_line']/tree//field[@name='price_unit']" position="replace">
                     <field name="price_unit"/>
-                </xpath>
-                <!-- Tambahkan quantity dan total_price ke dalam tree view -->
-                <xpath expr="//field[@name='order_line']/tree" position="inside">
-                    <field name="quantity"/>
-                    <field name="total_price" readonly="1"/>
                 </xpath>
             </field>
         </record>
